@@ -1,0 +1,122 @@
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.Configuration;
+//import org.apache.hadoop.fs.FileSystem;
+//import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.ByteWritable;
+import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileAsTextFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.mapreduce.TaskCounter;
+import org.apache.hadoop.mapreduce.FileSystemCounter;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormatCounter;
+import org.apache.hadoop.mapreduce.lib.input.FileOutputFormatCounter;
+import org.apache.hadoop.mapreduce.JobCounter;
+import java.io.IOException;
+import org.apache.hadoop.mapreduce.Partitioner;
+//import java.net.URI;
+import java.util.Iterator;
+import java.util.GenericOptionsParser;
+//import java.util.StringTokenizer;
+//
+//
+
+//
+//Mapper<LongWritable,Text,Text,IntWritable>  更改类型。
+public class NewWordCount {
+    public static class NewMapper extends Mapper<LongWritable,Text,Text,IntWritable> {
+enum LogCounter{语文,数学,英语,物理,化学,生物}
+        private Text word = new Text();
+        private IntWritable one = new IntWritable(1);
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String line = value.toString();
+            String[] str = line.split(" ");
+            for (String e : str) { //new Text(e);
+if(str[0].contains(语文)){context.getCounter("NUM_NULL","语文").increment(1);}else if(str[0].contains(数学)){context.getCounter("NUM_NULL","数学").increment(1);}else if(str[0].contains(英语)){context.getCounter("NUM_NULL","英语").increment(1);}else if(str[0].contains(物理)){context.getCounter("NUM_NULL","物理").increment(1);}else if(str[0].contains(化学)){context.getCounter("NUM_NULL","化学").increment(1);}else{context.getCounter("NUM_NULL","生物").increment(1);}
+
+                context.write(new Text(e), new IntWritable(1));
+
+//<Object,Text,IntWritable,Text>
+//String lines=value.toString();
+//String []str=lines.split(" ");
+//int key=Integer.parseInt(str[1]);
+//String value1=str[0];
+//context.write(new IntWritable(key),new Text(value1));
+//
+//
+
+
+}}}
+
+
+
+
+
+
+
+
+
+
+//
+
+//Reducer<Text, IntWritable, Text, IntWritable>更改类型
+    public static class NewReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+        private IntWritable result = new IntWritable();
+        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+            IntWritable vr;
+            int sum=0;
+            for(Iterator a=values.iterator();a.hasNext();sum+=vr.get()){
+                vr =(IntWritable) a.next();
+                }
+            this.result.set(sum);
+            context.write(key, this.result); }}
+    public static LogCountPartitioner extends Partitioner<MemberLogTime,IntnumWritable>{
+@Override
+public int getPartition(MemberLogTime key,IntnumWritable value,int numPartitions){
+String date=key.getLogTime();
+if(date.contains("2016-01")|date.contains("2016-02")){return 0%numPartitions;}else{return 1%numPartitions;}}} 
+    //
+//<IntWritable,Text,Text,IntWritable>
+//context.write(value,key);
+//
+//
+//
+
+
+
+//
+
+//
+
+
+public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
+        Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(conf);
+conf.set("fs.defaultFS","hdfs://192.168.15.72:8020");
+        Job job = Job.getInstance(conf, "WordCount");
+        job.setJarByClass(NewWordCount.class);
+        job.setMapperClass(NewMapper.class);
+        job.setReducerClass(NewWordCount.NewReducer.class);
+        job.setCombinerClass(NewWordCount.NewReducer.class);
+//job.
+job.setPartitionerClass(NewWordCount.LogCountPartitioner.class);
+job.setNumReduceTasks(1);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+        FileInputFormat.addInputPath(job, new Path("D:/wordcount/input/core-site.xml"));//更改路径
+        Path outPath = new Path("D:/wordcount/output");//更改路径
+        if (fs.exists(outPath)) { fs.delete(outPath, true); }
+        FileOutputFormat.setOutputPath(job, outPath);
+        boolean completion = job.waitForCompletion(true);
+        if (completion) { System.out.println("完成"); } }}
